@@ -140,6 +140,25 @@ def test_status_never_propagates_an_error_as_a_5xx(monkeypatch):
     assert response.json()["reachable"] is False
 
 
+def test_status_is_200_even_when_adb_is_missing_entirely(monkeypatch, tmp_path):
+    """End-to-end on the REAL controller, not a stub: the one endpoint HA
+    polls must answer 200 even when nothing about adb works.
+
+    This is the boot-window case — a recreated workspace container has the
+    durable keypair but no adb binary yet — and it reaches the first thing
+    status() does, the once-per-process `adb kill-server`.
+    """
+    key = tmp_path / "adbkey"
+    key.write_text("private")
+    monkeypatch.setattr("xiaomi_app.tv.adbkey_path", lambda: str(key))
+    api = TestClient(routes_mod.build_routes(lambda: {"adb_path": "/nonexistent/adb"}))
+
+    response = api.get("/tv/status")
+
+    assert response.status_code == 200
+    assert response.json()["reachable"] is False
+
+
 # -- manifest/route agreement ------------------------------------------------
 
 

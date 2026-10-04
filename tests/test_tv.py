@@ -29,11 +29,15 @@ class FakeAdb:
     """Records every argv and answers from a scripted `dumpsys power` state."""
 
     def __init__(self, *, wakefulness="Asleep", devices_state="device",
-                 fail_on=None, flip_on_keyevent=True):
+                 fail_on=None, raise_on=None, flip_on_keyevent=True):
         self.calls: list[list[str]] = []
         self.wakefulness = wakefulness
         self.devices_state = devices_state
         self.fail_on = fail_on or ()
+        # `fail_on` models a non-zero exit; `raise_on` models _run itself
+        # blowing up — a missing binary or a hung call — which is the only way
+        # kill-server can fail, since reset_server ignores exit codes.
+        self.raise_on = raise_on or ()
         self.flip_on_keyevent = flip_on_keyevent
         self.env_seen: list[dict] = []
 
@@ -41,6 +45,9 @@ class FakeAdb:
         self.calls.append(list(args))
         self.env_seen.append(env or {})
         joined = " ".join(args)
+        for needle in self.raise_on:
+            if needle in joined:
+                raise tv.AdbError(f"`adb {joined}` exploded: {needle}")
         for needle in self.fail_on:
             if needle in joined:
                 return subprocess.CompletedProcess(args, 1, "", f"boom: {needle}")
@@ -375,6 +382,51 @@ def test_the_server_is_killed_once_so_it_restarts_holding_the_key(
     asyncio.run(ctrl.status())
     asyncio.run(ctrl.status())
     assert [c[0] for c in fake.calls].count("kill-server") == 1
+
+
+def test_status_reports_a_failing_kill_server_instead_of_raising(
+    controller, monkeypatch, tmp_path
+):
+    """The once-per-process server reset is part of the status sequence, so it
+    has to fail the way every other step does — in the body.
+
+    Reachable in production: a recreated workspace container starts from a
+    fresh image with no adb, the keypair is already in the durable data dir,
+    so the first poll after boot runs kill-server against a binary that is
+    not there yet. HA polls this every 30s and is promised it never 5xxes.
+    """
+    key = tmp_path / "adbkey"
+    key.write_text("private")
+    monkeypatch.setattr(tv, "adbkey_path", lambda: str(key))
+    ctrl, fake = controller(raise_on=["kill-server"], wakefulness="Awake")
+    ctrl._server_reset = False
+
+    result = asyncio.run(ctrl.status())
+
+    assert result["reachable"] is False
+    assert "kill-server" in result["error"]
+
+
+def test_a_failing_kill_server_still_lets_the_next_poll_recover(
+    controller, monkeypatch, tmp_path
+):
+    """Self-heal, not a dead process: the reset is only needed to displace a
+    server that was already running without the key. Once it has been
+    attempted, the next `adb connect` starts the server itself and that one
+    inherits ADB_VENDOR_KEYS from the call's own env."""
+    key = tmp_path / "adbkey"
+    key.write_text("private")
+    monkeypatch.setattr(tv, "adbkey_path", lambda: str(key))
+    ctrl, fake = controller(raise_on=["kill-server"], wakefulness="Awake")
+    ctrl._server_reset = False
+
+    asyncio.run(ctrl.status())
+    second = asyncio.run(ctrl.status())
+
+    assert second["reachable"] is True
+    assert second["wakefulness"] == "Awake"
+    assert [c[0] for c in fake.calls].count("kill-server") == 1
+    assert fake.env_seen[-1].get("ADB_VENDOR_KEYS") == str(key)
 
 
 def test_the_server_is_not_killed_when_there_is_no_key_to_pick_up(

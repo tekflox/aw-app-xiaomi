@@ -279,8 +279,14 @@ class TvController:
         """
         async with _SEQUENCE_LOCK:
             deadline = _Deadline()
-            await self._ensure_server()
             try:
+                # Inside the try, not before it: the once-per-process server
+                # reset can raise like any other adb call (no binary yet on a
+                # freshly recreated container, or a hung kill-server), and
+                # this endpoint is promised never to 5xx — HA polls it every
+                # 30s. The write routes get away with the same ordering only
+                # because their route handlers wrap the whole call.
+                await self._ensure_server()
                 await self._adb(["connect", self.target()], deadline, "connect")
                 state = await self._device_state(deadline)
                 if state not in ("device", "unauthorized"):
