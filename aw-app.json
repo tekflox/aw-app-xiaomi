@@ -2,8 +2,8 @@
   "manifest_version": 1,
   "id": "xiaomi",
   "name": "Xiaomi TV",
-  "version": "0.1.0",
-  "description": "Turn the Xiaomi TV on or off and switch its HDMI input from anywhere on the house LAN — Home Assistant, a dashboard, a phone, an agent. No remote and no IR blaster: it talks to the TV over the network and reads the TV's own power state back, so a switch that says \"on\" means the screen really is on.",
+  "version": "0.2.0",
+  "description": "Turn the Xiaomi TV on or off and switch its HDMI input from anywhere on the house LAN \u2014 Home Assistant, a dashboard, a phone, an agent. No remote and no IR blaster: it talks to the TV over the network and reads the TV's own power state back, so a switch that says \"on\" means the screen really is on.",
   "tier": "inprocess",
   "requires_ui_refresh": false,
   "publisher": "TekFlox",
@@ -54,7 +54,7 @@
       "tv_host": {
         "type": "string",
         "default": "192.168.1.71",
-        "description": "TV's LAN address. Give it a DHCP reservation — this app finds the TV by IP, so a new lease silently breaks every call."
+        "description": "TV's LAN address. Give it a DHCP reservation \u2014 this app finds the TV by IP, so a new lease silently breaks every call."
       },
       "tv_port": {
         "type": "integer",
