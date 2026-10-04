@@ -53,7 +53,7 @@ caller that can present no credential of ours. So the app runs in the
 framework's `auth_required: false` mode — "the app's own auth is the final
 gate", the same mode `mcp-gateway`'s `admin/config` uses — and that mode is
 app-wide: on its own it would leave `/tv/power` open to the entire internet,
-which is the state this app shipped in and **v0.5.0 closed**.
+which is the state this app shipped in and **v0.6.0 closed**.
 
 `routes._require_credential` is therefore a dependency on the `/tv/*` routes
 that asks exactly one question: *did the framework authenticate this caller?*
@@ -218,7 +218,7 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST \
 # 3. the TV API is NO LONGER open to the internet
 curl -s -o /dev/null -w '%{http_code}\n' \
   https://xiaomi.app.fredericowu.workspace.aw.tekflox.com/tv/status
-#   -> 401   (it was 200 before v0.5.0)
+#   -> 401   (it was 200 before v0.6.0)
 
 # 4. ...but still answers a credentialed caller (this is HA's path)
 curl -s https://xiaomi.app.fredericowu.workspace.aw.tekflox.com/tv/status \

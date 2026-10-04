@@ -180,7 +180,7 @@ def test_status_is_200_even_when_adb_is_missing_entirely(monkeypatch, tmp_path):
 # This app runs in the framework's `auth_required: false` mode because
 # /alexa/skill has to be anonymous (Amazon can carry no credential of ours),
 # and that mode is app-WIDE. Without these the whole TV API is open to the
-# internet, which is the hole v0.5.0 closed.
+# internet, which is the hole v0.6.0 closed.
 
 
 @pytest.mark.parametrize("method, path, body", [
