@@ -2,7 +2,7 @@
   "manifest_version": 1,
   "id": "xiaomi",
   "name": "Xiaomi TV",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Turn the Xiaomi TV on or off and switch its HDMI input from anywhere on the house LAN \u2014 Home Assistant, a dashboard, a phone, an agent. No remote and no IR blaster: it talks to the TV over the network and reads the TV's own power state back, so a switch that says \"on\" means the screen really is on.",
   "tier": "inprocess",
   "requires_ui_refresh": false,
@@ -15,7 +15,9 @@
   "runtime": {
     "python": ">=3.11",
     "entrypoint": "xiaomi_app.plugin:XiaomiPlugin",
-    "pip_requires": [],
+    "pip_requires": [
+      "cryptography>=42"
+    ],
     "standalone": {
       "module": "xiaomi_app",
       "default_port": 9410
@@ -79,6 +81,18 @@
           "hdmi3": "HW6"
         },
         "description": "Maps each input name to the TV's own internal id for that socket. The defaults are right for this Xiaomi model; only change them if an input switches to the wrong socket."
+      },
+      "alexa_skill_id": {
+        "type": "string",
+        "default": "",
+        "title": "Alexa Skill ID",
+        "description": "The Skill ID (amzn1.ask.skill.…) from the Alexa developer console. Required: until it is set, POST /alexa/skill refuses every request. An Amazon signature only proves Amazon sent the request — this is what proves it came from YOUR skill and not from someone else's pointed at the same URL."
+      },
+      "alexa_device_name": {
+        "type": "string",
+        "default": "monitor",
+        "title": "Spoken device name",
+        "description": "What Alexa calls the TV when she speaks back (\"Turning on the monitor now\"). Changing it does not change what you SAY — the words Alexa listens for live in the skill's interaction model in the developer console."
       }
     },
     "required": []

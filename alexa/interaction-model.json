@@ -1,0 +1,84 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "tv control",
+      "intents": [
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "TurnOnIntent",
+          "slots": [],
+          "samples": [
+            "turn on the monitor",
+            "turn the monitor on",
+            "turn on the tv",
+            "turn the tv on",
+            "turn on the screen",
+            "switch on the monitor",
+            "switch the monitor on",
+            "monitor on",
+            "tv on",
+            "to turn on the monitor",
+            "to turn the monitor on",
+            "to turn on the tv",
+            "wake up the monitor",
+            "power on the monitor"
+          ]
+        },
+        {
+          "name": "TurnOffIntent",
+          "slots": [],
+          "samples": [
+            "turn off the monitor",
+            "turn the monitor off",
+            "turn off the tv",
+            "turn the tv off",
+            "turn off the screen",
+            "switch off the monitor",
+            "switch the monitor off",
+            "monitor off",
+            "tv off",
+            "to turn off the monitor",
+            "to turn the monitor off",
+            "to turn off the tv",
+            "power off the monitor"
+          ]
+        },
+        {
+          "name": "GetStatusIntent",
+          "slots": [],
+          "samples": [
+            "if the monitor is on",
+            "whether the monitor is on",
+            "is the monitor on",
+            "is the tv on",
+            "if the tv is on",
+            "the monitor status",
+            "the tv status",
+            "for the monitor status",
+            "status"
+          ]
+        }
+      ],
+      "types": []
+    }
+  }
+}
