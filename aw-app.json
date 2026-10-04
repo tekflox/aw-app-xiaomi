@@ -2,7 +2,7 @@
   "manifest_version": 1,
   "id": "xiaomi",
   "name": "Xiaomi TV",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Turn the Xiaomi TV on or off and switch its HDMI input from anywhere on the house LAN \u2014 Home Assistant, a dashboard, a phone, an agent. No remote and no IR blaster: it talks to the TV over the network and reads the TV's own power state back, so a switch that says \"on\" means the screen really is on.",
   "tier": "inprocess",
   "requires_ui_refresh": false,
