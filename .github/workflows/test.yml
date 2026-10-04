@@ -1,0 +1,86 @@
+name: Test
+
+# Push/PR-triggered coverage gate: pytest-cov against pyproject.toml's
+# fail_under=100, blocking. Per docs/standards/pipeline-testing.md — a hard
+# gate here specifically (not the estate's baseline+ratchet default, §4.2),
+# since this template is what every new aw-app-* is born from and is meant
+# to be the quality reference the rest of the estate is measured against
+# (card 3d75bf3b-9510-8172-a929-c1fe4e60254c) — coverage is genuinely at
+# 100% (real behavioral tests, not import-only stubs; impractical lines are
+# excluded explicitly in pyproject.toml's [tool.coverage.report], not left
+# as a silent gap), so the gate now locks that in rather than allowing
+# regression back toward the estate's 80% floor. The shared
+# tekflox/aw-marketplace release workflow (release.yml -> app-release.yml)
+# runs the test suite but has no coverage step yet — that's Phase 2 of the
+# standard's rollout, a separate repo — so until then this repo's own gate
+# lives here.
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch: {}
+
+# runs-on is derived from this repo's owner rather than hardcoded, and it is
+# load-bearing twice over for any app scaffolded from this template onto a
+# personal account:
+#   1. The [self-hosted, aw-baremetal] runners live in tekflox org runner group
+#      3 (aw-private), and an org runner group can only be shared with repos IN
+#      that org. A repo outside it can never be added, so its jobs would not
+#      fail — they would queue forever, which reads as "still running".
+#   2. The `pull_request:` trigger above is unqualified, so on a PUBLIC repo
+#      anyone can open one from a fork. Fork PR + self-hosted runner is
+#      arbitrary code execution on the bare-metal host that runs the whole
+#      workspace: checkout fetches the stranger's branch and pytest runs it.
+#      GitHub-hosted runners are disposable VMs with a read-only token, which
+#      is what makes an open `pull_request:` trigger safe — and they are free
+#      and unmetered on a public repo.
+# fromJSON needs valid JSON inside, so the single label carries its own quotes.
+jobs:
+  coverage:
+    runs-on: ${{ fromJSON(startsWith(github.repository, 'tekflox/') && '["self-hosted","aw-baremetal"]' || '"ubuntu-latest"') }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+      - name: Install deps
+        run: pip install -r requirements-dev.txt pytest jsonschema fastapi httpx uvicorn
+      # tests/validate_manifest.py falls back to a sibling aw-marketplace
+      # checkout for the canonical schema when this repo has no local
+      # schemas/ copy (by design). That sibling already exists in this
+      # workspace's own dev container (every app repo is checked out next
+      # to aw-marketplace there), which is why it resolves locally — but
+      # actions/checkout refuses a `path` that escapes $GITHUB_WORKSPACE,
+      # so a true sibling checkout isn't possible on a real runner. Check it
+      # out into a subdirectory instead and point --schema at it explicitly,
+      # bypassing the fallback altogether. Found by the aw-app-kb pilot of
+      # this same standard (card 3d65bf3b-9510-8173-b347-d834e37aeedf) —
+      # applying the fix directly instead of rediscovering it in CI here.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: tekflox/aw-marketplace
+          path: .aw-marketplace-schema
+      - name: Validate manifest
+        run: python3 tests/validate_manifest.py aw-app.json --schema .aw-marketplace-schema/schemas/aw-app.schema.json
+      - name: Test suite + coverage gate
+        # fail_under is read from pyproject.toml's [tool.coverage.report] —
+        # see docs/standards/pipeline-testing.md §4.2. html + xml reports are
+        # generated alongside the blocking term-missing one specifically so
+        # the html report can be published as a downloadable artifact below
+        # — this step still fails (and skips the upload) if coverage drops
+        # below fail_under.
+        run: |
+          pytest --cov=xiaomi_app --cov-report=term-missing \
+            --cov-report=html --cov-report=xml tests/ -q
+      - name: Upload coverage report artifact
+        # Downloadable straight from the Actions run's Summary page — no
+        # local pytest run needed to see what's covered. if: always() so a
+        # failing coverage gate still publishes the report that explains why.
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: coverage-report
+          path: |
+            htmlcov/
+            coverage.xml
+          retention-days: 30

@@ -1,0 +1,24 @@
+[tool.coverage.run]
+source = ["xiaomi_app"]
+omit = ["*/__pycache__/*"]
+
+[tool.coverage.report]
+# Exemptions 1-4 from docs/standards/pipeline-testing.md §3 (glue, properties,
+# dunder reprs, pure re-exports), same list as aw-app-template's.
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "def __str__",
+    "if __name__ == .__main__",
+    "raise NotImplementedError",
+    "pass",
+    "except ImportError",
+]
+show_missing = true
+precision = 1
+# The estate's 80% floor (docs/standards/pipeline-testing.md §4.2), not the
+# template's hard 100% — the uncovered remainder here is uvicorn.run() in
+# standalone main() and the subprocess plumbing that only means anything
+# against a real TV, both of which are verified by hand against the live
+# device rather than by a mock that would only assert the mock.
+fail_under = 80

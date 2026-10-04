@@ -1,0 +1,46 @@
+name: Release
+#
+# Works on a personal-account repo as well as a tekflox/* one, with no edit
+# here. The called workflow derives `runs-on` from the CALLER's owner —
+# `tekflox/*` gets the org's [self-hosted, aw-baremetal] pair, anything else
+# gets ubuntu-latest — because an org runner group can only be shared with
+# repos inside that org, and a job aimed at one from outside queues FOREVER
+# instead of failing. There is no runner input to pass or remember.
+#
+# What a non-tekflox repo does still need, once: MARKETPLACE_SYNC_TOKEN as a
+# REPO-level Actions secret on that repo. `secrets: inherit`-style delivery has
+# no org secrets to inherit outside the org, so until the secret exists the
+# first push produces a RED run whose error names the repo, the secret and the
+# smallest safe PAT shape. Red and self-explaining is the intent — an
+# eternally-queued run reads as "still working" and hid a frozen catalog entry
+# for months (card 3e65bf3b-9510-814d-b49e-d0a61520cd0b).
+#
+# The catalog sync PR from a non-tekflox repo will NOT auto-merge; it waits for
+# a human. That gate is deliberate — do not try to defeat it.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Force bump kind"
+        type: choice
+        options: [major]
+
+jobs:
+  release:
+    # Moving ref: bumping app-release.yml in aw-marketplace propagates here
+    # automatically. Move to @v1 once aw-marketplace cuts a first tag.
+    #
+    # permissions here is the CEILING the called workflow's own
+    # `contents: write` request is checked against — this repo's default
+    # workflow permissions are read-only, so without this the run fails at
+    # startup (startup_failure, zero jobs) before ever reaching aw-marketplace.
+    permissions:
+      contents: write
+    uses: tekflox/aw-marketplace/.github/workflows/app-release.yml@master
+    with:
+      bump: ${{ inputs.bump || '' }}
+    secrets:
+      MARKETPLACE_SYNC_TOKEN: ${{ secrets.MARKETPLACE_SYNC_TOKEN }}

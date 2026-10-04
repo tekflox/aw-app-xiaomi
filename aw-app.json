@@ -1,0 +1,89 @@
+{
+  "manifest_version": 1,
+  "id": "xiaomi",
+  "name": "Xiaomi TV",
+  "version": "0.1.0",
+  "description": "Turn the Xiaomi TV on or off and switch its HDMI input from anywhere on the house LAN — Home Assistant, a dashboard, a phone, an agent. No remote and no IR blaster: it talks to the TV over the network and reads the TV's own power state back, so a switch that says \"on\" means the screen really is on.",
+  "tier": "inprocess",
+  "requires_ui_refresh": false,
+  "publisher": "TekFlox",
+  "resource_estimate": {
+    "cpu": "low",
+    "memory": "low",
+    "disk": "low"
+  },
+  "runtime": {
+    "python": ">=3.11",
+    "entrypoint": "xiaomi_app.plugin:XiaomiPlugin",
+    "pip_requires": [],
+    "standalone": {
+      "module": "xiaomi_app",
+      "default_port": 9410
+    }
+  },
+  "permissions": [
+    "commands:install",
+    "fs:workspace-data",
+    "routes:local",
+    "routes:register"
+  ],
+  "contributes": {
+    "system_clis": [
+      {
+        "name": "adb",
+        "installer": "scripts/install_adb.sh",
+        "verify": "adb --version"
+      }
+    ],
+    "routes": [
+      {
+        "prefix": "/api/apps/xiaomi",
+        "local_paths": [
+          "/tv/power",
+          "/tv/status",
+          "/tv/input/hdmi1",
+          "/tv/input/hdmi2",
+          "/tv/input/hdmi3"
+        ]
+      }
+    ]
+  },
+  "config_schema": {
+    "type": "object",
+    "properties": {
+      "tv_host": {
+        "type": "string",
+        "default": "192.168.1.71",
+        "description": "TV's LAN address. Give it a DHCP reservation — this app finds the TV by IP, so a new lease silently breaks every call."
+      },
+      "tv_port": {
+        "type": "integer",
+        "default": 5555,
+        "description": "TCP port the TV listens for network debugging on. 5555 unless you changed it on the TV."
+      },
+      "adb_path": {
+        "type": "string",
+        "default": "adb",
+        "description": "Path to the adb binary. Leave as \"adb\" to use the one this app installs."
+      },
+      "default_input": {
+        "type": "string",
+        "default": "hdmi1",
+        "description": "Input to switch to when the TV is turned on."
+      },
+      "inputs": {
+        "type": "object",
+        "default": {
+          "hdmi1": "HW4",
+          "hdmi2": "HW5",
+          "hdmi3": "HW6"
+        },
+        "description": "Maps each input name to the TV's own internal id for that socket. The defaults are right for this Xiaomi model; only change them if an input switches to the wrong socket."
+      }
+    },
+    "required": []
+  },
+  "config_visible": true,
+  "dependencies": {},
+  "migrations": {}
+}
